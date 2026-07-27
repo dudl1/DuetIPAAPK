@@ -1,6 +1,6 @@
 name: Expo Prebuild & iOS Build
 on:
-  workflow_dispatch: # Позволяет запускать сборку вручную одной кнопкой
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,29 +12,34 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Или укажите вашу версию Node.js
+          node-version: 20
 
       - name: Install dependencies
-        run: npm ci || npm install # Установка библиотек
+        run: npm ci || npm install
 
-      # Генерируем папку ios прямо в облаке Mac
+      # Генерируем папку ios в облаке
       - name: Run Expo Prebuild for iOS
         run: npx expo prebuild --platform ios --no-install
 
-      # Собираем JS-код приложения внутрь нативного проекта
-           # Собираем JS-код приложения внутрь нативного проекта (исправлено под Expo Router)
+      # Выводим список файлов, чтобы точно знать имя проекта в логах
+      - name: List iOS directory
+        run: ls -la ios
+
+      # Собираем JS-код приложения внутрь папки ios
       - name: Export Expo Embed bundle
         run: npx expo export:embed --entry-file=node_modules/expo-router/entry.js --bundle-output=./ios/main.jsbundle --dev=false --platform=ios
 
-      # Компилируем сырой .app без цифровой подписи Apple
-            # Компилируем сырой .app без цифровой подписи Apple (исправлено имя схемы)
-            # Компилируем сырой .app без цифровой подписи Apple (исправлен путь workspace)
+      # Компилируем .app без подписи (автоматический поиск workspace и scheme)
       - name: Build Xcode Project
         run: |
           cd ios
-          xcodebuild -workspace duet.xcworkspace -scheme "duet" -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+          WORKSPACE_FILE=$(ls -d *.xcworkspace)
+          SCHEME_NAME=$(basename "$WORKSPACE_FILE" .xcworkspace)
+          echo "Found Workspace: $WORKSPACE_FILE"
+          echo "Found Scheme: $SCHEME_NAME"
+          xcodebuild -workspace "$WORKSPACE_FILE" -scheme "$SCHEME_NAME" -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
-      # Упаковываем .app в формат .ipa
+      # Упаковываем полученный .app в формат .ipa
       - name: Create Unsigned IPA Pack
         run: |
           mkdir -p build/Payload
@@ -42,7 +47,7 @@ jobs:
           cd build
           zip -r App.ipa Payload/
 
-      # Выкладываем файл на страницу GitHub Actions для скачивания
+      # Загружаем готовый .ipa для скачивания в Artifacts
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
