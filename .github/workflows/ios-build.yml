@@ -28,10 +28,11 @@ jobs:
 
       # Компилируем сырой .app без цифровой подписи Apple
             # Компилируем сырой .app без цифровой подписи Apple (исправлено имя схемы)
+            # Компилируем сырой .app без цифровой подписи Apple (исправлен путь workspace)
       - name: Build Xcode Project
         run: |
           cd ios
-          xcodebuild -workspace *.xcworkspace -scheme "duet" -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+          xcodebuild -workspace duet.xcworkspace -scheme "duet" -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
       # Упаковываем .app в формат .ipa
       - name: Create Unsigned IPA Pack
