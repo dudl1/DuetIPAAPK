@@ -22,8 +22,9 @@ jobs:
         run: npx expo prebuild --platform ios --no-install
 
       # Собираем JS-код приложения внутрь нативного проекта
+           # Собираем JS-код приложения внутрь нативного проекта (исправлено под Expo Router)
       - name: Export Expo Embed bundle
-        run: npx expo export:embed --entry-file=node_modules/expo/AppEntry.js --bundle-output=./ios/main.jsbundle --dev=false --platform=ios
+        run: npx expo export:embed --entry-file=node_modules/expo-router/entry.js --bundle-output=./ios/main.jsbundle --dev=false --platform=ios
 
       # Компилируем сырой .app без цифровой подписи Apple
       - name: Build Xcode Project
