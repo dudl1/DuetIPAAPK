@@ -27,10 +27,11 @@ jobs:
         run: npx expo export:embed --entry-file=node_modules/expo-router/entry.js --bundle-output=./ios/main.jsbundle --dev=false --platform=ios
 
       # Компилируем сырой .app без цифровой подписи Apple
+            # Компилируем сырой .app без цифровой подписи Apple (исправлено имя схемы)
       - name: Build Xcode Project
         run: |
           cd ios
-          xcodebuild -workspace *.xcworkspace -scheme $(basename *.xcworkspace .xcworkspace) -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+          xcodebuild -workspace *.xcworkspace -scheme "duet" -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
       # Упаковываем .app в формат .ipa
       - name: Create Unsigned IPA Pack
