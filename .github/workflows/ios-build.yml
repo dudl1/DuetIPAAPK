@@ -1,0 +1,47 @@
+name: Expo Prebuild & iOS Build
+on:
+  workflow_dispatch: # Позволяет запускать сборку вручную одной кнопкой
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Или укажите вашу версию Node.js
+
+      - name: Install dependencies
+        run: npm ci || npm install # Установка библиотек
+
+      # Генерируем папку ios прямо в облаке Mac
+      - name: Run Expo Prebuild for iOS
+        run: npx expo prebuild --platform ios --no-install
+
+      # Собираем JS-код приложения внутрь нативного проекта
+      - name: Export Expo Embed bundle
+        run: npx expo export:embed --entry-file=node_modules/expo/AppEntry.js --bundle-output=./ios/main.jsbundle --dev=false --platform=ios
+
+      # Компилируем сырой .app без цифровой подписи Apple
+      - name: Build Xcode Project
+        run: |
+          cd ios
+          xcodebuild -workspace *.xcworkspace -scheme $(basename *.xcworkspace .xcworkspace) -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      # Упаковываем .app в формат .ipa
+      - name: Create Unsigned IPA Pack
+        run: |
+          mkdir -p build/Payload
+          cp -r ios/build/Release-iphoneos/*.app build/Payload/
+          cd build
+          zip -r App.ipa Payload/
+
+      # Выкладываем файл на страницу GitHub Actions для скачивания
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-ios-ipa
+          path: build/App.ipa
